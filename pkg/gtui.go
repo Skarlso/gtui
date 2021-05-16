@@ -7,7 +7,7 @@ import (
 	"github.com/google/go-github/v35/github"
 	"golang.org/x/oauth2"
 
-	"github.com/Skarlso/gtui/providers"
+	"github.com/Skarlso/gtui/pkg/providers"
 )
 
 // Config contains configuration properties for GTUI.
