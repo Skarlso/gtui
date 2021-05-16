@@ -27,4 +27,4 @@ lint:
 
 .PHONY: run
 run:
-	go run cmd/root.go
+	go run main.go
