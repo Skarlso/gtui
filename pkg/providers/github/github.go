@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"time"
 
+	"github.com/Skarlso/gtui/models"
 	"github.com/google/go-github/v35/github"
 	"github.com/rs/zerolog"
 	"golang.org/x/oauth2"
@@ -35,14 +36,15 @@ func NewGithubProvider(cfg Config) *GithubProvider {
 	return &GithubProvider{Config: cfg, Client: client}
 }
 
-// List lists all projects for an organization
-func (g *GithubProvider) List() ([]*github.Project, error) {
+// ListProjects lists all projects for an organization
+func (g *GithubProvider) ListProjects(ctx context.Context, org string, o *models.ListOptions) ([]*github.Project, error) {
 	result := make([]*github.Project, 0)
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
 	opts := &github.ProjectListOptions{
 		ListOptions: github.ListOptions{
-			PerPage: 10,
+			Page:    o.Page,
+			PerPage: o.PerPage,
 		},
 	}
 	// list all projects for the authenticated user
@@ -65,6 +67,7 @@ func (g *GithubProvider) List() ([]*github.Project, error) {
 	return result, nil
 }
 
-func GetProject() error {
-	return nil
+// GetProject .
+func GetProject(ctx context.Context, name string) (*models.Project, error) {
+	return nil, nil
 }
