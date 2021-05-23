@@ -8,7 +8,6 @@ import (
 
 // Config contains configuration properties for GTUI.
 type Config struct {
-	Token string
 }
 
 type Dependencies struct {
@@ -18,11 +17,14 @@ type Dependencies struct {
 // GTUIClient defines a client for GTUI.
 type GTUIClient struct {
 	Config
+	Dependencies
 }
 
-func NewGTUIClient(cfg Config) *GTUIClient {
+// NewGTUIClient creates a tui client with all the configs and dependencies needed.
+func NewGTUIClient(cfg Config, deps Dependencies) *GTUIClient {
 	return &GTUIClient{
-		Config: cfg,
+		Dependencies: deps,
+		Config:       cfg,
 	}
 }
 

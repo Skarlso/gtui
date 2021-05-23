@@ -27,4 +27,4 @@ lint:
 
 .PHONY: run
 run:
-	go run main.go
+	go run gtui.go

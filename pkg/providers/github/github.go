@@ -16,7 +16,7 @@ import (
 // Config .
 type Config struct {
 	Token string
-	// TODO add some more
+	// TODO add some more like pagination and shit
 }
 
 // GithubProvider .
