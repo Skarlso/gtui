@@ -9,11 +9,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/Skarlso/gtui/models"
 	"github.com/google/go-github/v35/github"
 	"github.com/rs/zerolog"
-
 	"github.com/stretchr/testify/assert"
+
+	"github.com/Skarlso/gtui/models"
 )
 
 type mockTransport struct {
