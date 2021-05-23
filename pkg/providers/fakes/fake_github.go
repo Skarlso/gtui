@@ -10,11 +10,11 @@ import (
 )
 
 type FakeGithub struct {
-	GetProjectStub        func(context.Context, string) (*models.Project, error)
+	GetProjectStub        func(context.Context, int64) (*models.Project, error)
 	getProjectMutex       sync.RWMutex
 	getProjectArgsForCall []struct {
 		arg1 context.Context
-		arg2 string
+		arg2 int64
 	}
 	getProjectReturns struct {
 		result1 *models.Project
@@ -24,12 +24,12 @@ type FakeGithub struct {
 		result1 *models.Project
 		result2 error
 	}
-	ListProjectsStub        func(context.Context, string, models.ListOptions) ([]*models.Project, error)
+	ListProjectsStub        func(context.Context, string, *models.ListOptions) ([]*models.Project, error)
 	listProjectsMutex       sync.RWMutex
 	listProjectsArgsForCall []struct {
 		arg1 context.Context
 		arg2 string
-		arg3 models.ListOptions
+		arg3 *models.ListOptions
 	}
 	listProjectsReturns struct {
 		result1 []*models.Project
@@ -43,12 +43,12 @@ type FakeGithub struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeGithub) GetProject(arg1 context.Context, arg2 string) (*models.Project, error) {
+func (fake *FakeGithub) GetProject(arg1 context.Context, arg2 int64) (*models.Project, error) {
 	fake.getProjectMutex.Lock()
 	ret, specificReturn := fake.getProjectReturnsOnCall[len(fake.getProjectArgsForCall)]
 	fake.getProjectArgsForCall = append(fake.getProjectArgsForCall, struct {
 		arg1 context.Context
-		arg2 string
+		arg2 int64
 	}{arg1, arg2})
 	stub := fake.GetProjectStub
 	fakeReturns := fake.getProjectReturns
@@ -69,13 +69,13 @@ func (fake *FakeGithub) GetProjectCallCount() int {
 	return len(fake.getProjectArgsForCall)
 }
 
-func (fake *FakeGithub) GetProjectCalls(stub func(context.Context, string) (*models.Project, error)) {
+func (fake *FakeGithub) GetProjectCalls(stub func(context.Context, int64) (*models.Project, error)) {
 	fake.getProjectMutex.Lock()
 	defer fake.getProjectMutex.Unlock()
 	fake.GetProjectStub = stub
 }
 
-func (fake *FakeGithub) GetProjectArgsForCall(i int) (context.Context, string) {
+func (fake *FakeGithub) GetProjectArgsForCall(i int) (context.Context, int64) {
 	fake.getProjectMutex.RLock()
 	defer fake.getProjectMutex.RUnlock()
 	argsForCall := fake.getProjectArgsForCall[i]
@@ -108,13 +108,13 @@ func (fake *FakeGithub) GetProjectReturnsOnCall(i int, result1 *models.Project, 
 	}{result1, result2}
 }
 
-func (fake *FakeGithub) ListProjects(arg1 context.Context, arg2 string, arg3 models.ListOptions) ([]*models.Project, error) {
+func (fake *FakeGithub) ListProjects(arg1 context.Context, arg2 string, arg3 *models.ListOptions) ([]*models.Project, error) {
 	fake.listProjectsMutex.Lock()
 	ret, specificReturn := fake.listProjectsReturnsOnCall[len(fake.listProjectsArgsForCall)]
 	fake.listProjectsArgsForCall = append(fake.listProjectsArgsForCall, struct {
 		arg1 context.Context
 		arg2 string
-		arg3 models.ListOptions
+		arg3 *models.ListOptions
 	}{arg1, arg2, arg3})
 	stub := fake.ListProjectsStub
 	fakeReturns := fake.listProjectsReturns
@@ -135,13 +135,13 @@ func (fake *FakeGithub) ListProjectsCallCount() int {
 	return len(fake.listProjectsArgsForCall)
 }
 
-func (fake *FakeGithub) ListProjectsCalls(stub func(context.Context, string, models.ListOptions) ([]*models.Project, error)) {
+func (fake *FakeGithub) ListProjectsCalls(stub func(context.Context, string, *models.ListOptions) ([]*models.Project, error)) {
 	fake.listProjectsMutex.Lock()
 	defer fake.listProjectsMutex.Unlock()
 	fake.ListProjectsStub = stub
 }
 
-func (fake *FakeGithub) ListProjectsArgsForCall(i int) (context.Context, string, models.ListOptions) {
+func (fake *FakeGithub) ListProjectsArgsForCall(i int) (context.Context, string, *models.ListOptions) {
 	fake.listProjectsMutex.RLock()
 	defer fake.listProjectsMutex.RUnlock()
 	argsForCall := fake.listProjectsArgsForCall[i]
