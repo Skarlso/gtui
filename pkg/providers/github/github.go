@@ -44,10 +44,18 @@ func (g *GithubProvider) ListProjects(ctx context.Context, org string, opts *mod
 	result := make([]*models.Project, 0)
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
+	var (
+		page    int
+		perPage = 10
+	)
+	if opts != nil {
+		page = opts.Page
+		perPage = opts.PerPage
+	}
 	o := &github.ProjectListOptions{
 		ListOptions: github.ListOptions{
-			Page:    opts.Page,
-			PerPage: opts.PerPage,
+			Page:    page,
+			PerPage: perPage,
 		},
 	}
 	for {
