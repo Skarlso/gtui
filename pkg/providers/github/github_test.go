@@ -52,7 +52,7 @@ func TestGithubProvider_GetProject(t *testing.T) {
 	assert.Equal(t, expected, got)
 }
 
-func TestGithubProvider_ListProjects(t *testing.T) {
+func TestGithubProvider_ListOrganizationProjects(t *testing.T) {
 	content, err := ioutil.ReadFile(filepath.Join("testdata", "list_projects.json"))
 	assert.NoError(t, err)
 	logger := zerolog.New(os.Stderr)
@@ -75,7 +75,7 @@ func TestGithubProvider_ListProjects(t *testing.T) {
 		Name: "Organization Roadmap",
 		ID:   1002605,
 	}
-	got, err := gClient.ListProjects(context.Background(), "octocat", nil)
+	got, err := gClient.ListOrganizationProjects(context.Background(), "octocat", nil)
 	assert.NoError(t, err)
 	assert.Len(t, got, 1)
 	assert.Equal(t, expected, got[0])

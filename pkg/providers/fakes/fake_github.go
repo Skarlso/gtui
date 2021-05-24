@@ -24,18 +24,48 @@ type FakeGithub struct {
 		result1 *models.Project
 		result2 error
 	}
-	ListProjectsStub        func(context.Context, string, *models.ListOptions) ([]*models.Project, error)
-	listProjectsMutex       sync.RWMutex
-	listProjectsArgsForCall []struct {
+	GetProjectDataStub        func(context.Context, int64) (*models.ProjectData, error)
+	getProjectDataMutex       sync.RWMutex
+	getProjectDataArgsForCall []struct {
+		arg1 context.Context
+		arg2 int64
+	}
+	getProjectDataReturns struct {
+		result1 *models.ProjectData
+		result2 error
+	}
+	getProjectDataReturnsOnCall map[int]struct {
+		result1 *models.ProjectData
+		result2 error
+	}
+	ListOrganizationProjectsStub        func(context.Context, string, *models.ListOptions) ([]*models.Project, error)
+	listOrganizationProjectsMutex       sync.RWMutex
+	listOrganizationProjectsArgsForCall []struct {
 		arg1 context.Context
 		arg2 string
 		arg3 *models.ListOptions
 	}
-	listProjectsReturns struct {
+	listOrganizationProjectsReturns struct {
 		result1 []*models.Project
 		result2 error
 	}
-	listProjectsReturnsOnCall map[int]struct {
+	listOrganizationProjectsReturnsOnCall map[int]struct {
+		result1 []*models.Project
+		result2 error
+	}
+	ListRepositoryProjectsStub        func(context.Context, string, string, *models.ListOptions) ([]*models.Project, error)
+	listRepositoryProjectsMutex       sync.RWMutex
+	listRepositoryProjectsArgsForCall []struct {
+		arg1 context.Context
+		arg2 string
+		arg3 string
+		arg4 *models.ListOptions
+	}
+	listRepositoryProjectsReturns struct {
+		result1 []*models.Project
+		result2 error
+	}
+	listRepositoryProjectsReturnsOnCall map[int]struct {
 		result1 []*models.Project
 		result2 error
 	}
@@ -108,18 +138,83 @@ func (fake *FakeGithub) GetProjectReturnsOnCall(i int, result1 *models.Project, 
 	}{result1, result2}
 }
 
-func (fake *FakeGithub) ListProjects(arg1 context.Context, arg2 string, arg3 *models.ListOptions) ([]*models.Project, error) {
-	fake.listProjectsMutex.Lock()
-	ret, specificReturn := fake.listProjectsReturnsOnCall[len(fake.listProjectsArgsForCall)]
-	fake.listProjectsArgsForCall = append(fake.listProjectsArgsForCall, struct {
+func (fake *FakeGithub) GetProjectData(arg1 context.Context, arg2 int64) (*models.ProjectData, error) {
+	fake.getProjectDataMutex.Lock()
+	ret, specificReturn := fake.getProjectDataReturnsOnCall[len(fake.getProjectDataArgsForCall)]
+	fake.getProjectDataArgsForCall = append(fake.getProjectDataArgsForCall, struct {
+		arg1 context.Context
+		arg2 int64
+	}{arg1, arg2})
+	stub := fake.GetProjectDataStub
+	fakeReturns := fake.getProjectDataReturns
+	fake.recordInvocation("GetProjectData", []interface{}{arg1, arg2})
+	fake.getProjectDataMutex.Unlock()
+	if stub != nil {
+		return stub(arg1, arg2)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeGithub) GetProjectDataCallCount() int {
+	fake.getProjectDataMutex.RLock()
+	defer fake.getProjectDataMutex.RUnlock()
+	return len(fake.getProjectDataArgsForCall)
+}
+
+func (fake *FakeGithub) GetProjectDataCalls(stub func(context.Context, int64) (*models.ProjectData, error)) {
+	fake.getProjectDataMutex.Lock()
+	defer fake.getProjectDataMutex.Unlock()
+	fake.GetProjectDataStub = stub
+}
+
+func (fake *FakeGithub) GetProjectDataArgsForCall(i int) (context.Context, int64) {
+	fake.getProjectDataMutex.RLock()
+	defer fake.getProjectDataMutex.RUnlock()
+	argsForCall := fake.getProjectDataArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
+}
+
+func (fake *FakeGithub) GetProjectDataReturns(result1 *models.ProjectData, result2 error) {
+	fake.getProjectDataMutex.Lock()
+	defer fake.getProjectDataMutex.Unlock()
+	fake.GetProjectDataStub = nil
+	fake.getProjectDataReturns = struct {
+		result1 *models.ProjectData
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeGithub) GetProjectDataReturnsOnCall(i int, result1 *models.ProjectData, result2 error) {
+	fake.getProjectDataMutex.Lock()
+	defer fake.getProjectDataMutex.Unlock()
+	fake.GetProjectDataStub = nil
+	if fake.getProjectDataReturnsOnCall == nil {
+		fake.getProjectDataReturnsOnCall = make(map[int]struct {
+			result1 *models.ProjectData
+			result2 error
+		})
+	}
+	fake.getProjectDataReturnsOnCall[i] = struct {
+		result1 *models.ProjectData
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeGithub) ListOrganizationProjects(arg1 context.Context, arg2 string, arg3 *models.ListOptions) ([]*models.Project, error) {
+	fake.listOrganizationProjectsMutex.Lock()
+	ret, specificReturn := fake.listOrganizationProjectsReturnsOnCall[len(fake.listOrganizationProjectsArgsForCall)]
+	fake.listOrganizationProjectsArgsForCall = append(fake.listOrganizationProjectsArgsForCall, struct {
 		arg1 context.Context
 		arg2 string
 		arg3 *models.ListOptions
 	}{arg1, arg2, arg3})
-	stub := fake.ListProjectsStub
-	fakeReturns := fake.listProjectsReturns
-	fake.recordInvocation("ListProjects", []interface{}{arg1, arg2, arg3})
-	fake.listProjectsMutex.Unlock()
+	stub := fake.ListOrganizationProjectsStub
+	fakeReturns := fake.listOrganizationProjectsReturns
+	fake.recordInvocation("ListOrganizationProjects", []interface{}{arg1, arg2, arg3})
+	fake.listOrganizationProjectsMutex.Unlock()
 	if stub != nil {
 		return stub(arg1, arg2, arg3)
 	}
@@ -129,46 +224,113 @@ func (fake *FakeGithub) ListProjects(arg1 context.Context, arg2 string, arg3 *mo
 	return fakeReturns.result1, fakeReturns.result2
 }
 
-func (fake *FakeGithub) ListProjectsCallCount() int {
-	fake.listProjectsMutex.RLock()
-	defer fake.listProjectsMutex.RUnlock()
-	return len(fake.listProjectsArgsForCall)
+func (fake *FakeGithub) ListOrganizationProjectsCallCount() int {
+	fake.listOrganizationProjectsMutex.RLock()
+	defer fake.listOrganizationProjectsMutex.RUnlock()
+	return len(fake.listOrganizationProjectsArgsForCall)
 }
 
-func (fake *FakeGithub) ListProjectsCalls(stub func(context.Context, string, *models.ListOptions) ([]*models.Project, error)) {
-	fake.listProjectsMutex.Lock()
-	defer fake.listProjectsMutex.Unlock()
-	fake.ListProjectsStub = stub
+func (fake *FakeGithub) ListOrganizationProjectsCalls(stub func(context.Context, string, *models.ListOptions) ([]*models.Project, error)) {
+	fake.listOrganizationProjectsMutex.Lock()
+	defer fake.listOrganizationProjectsMutex.Unlock()
+	fake.ListOrganizationProjectsStub = stub
 }
 
-func (fake *FakeGithub) ListProjectsArgsForCall(i int) (context.Context, string, *models.ListOptions) {
-	fake.listProjectsMutex.RLock()
-	defer fake.listProjectsMutex.RUnlock()
-	argsForCall := fake.listProjectsArgsForCall[i]
+func (fake *FakeGithub) ListOrganizationProjectsArgsForCall(i int) (context.Context, string, *models.ListOptions) {
+	fake.listOrganizationProjectsMutex.RLock()
+	defer fake.listOrganizationProjectsMutex.RUnlock()
+	argsForCall := fake.listOrganizationProjectsArgsForCall[i]
 	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
 }
 
-func (fake *FakeGithub) ListProjectsReturns(result1 []*models.Project, result2 error) {
-	fake.listProjectsMutex.Lock()
-	defer fake.listProjectsMutex.Unlock()
-	fake.ListProjectsStub = nil
-	fake.listProjectsReturns = struct {
+func (fake *FakeGithub) ListOrganizationProjectsReturns(result1 []*models.Project, result2 error) {
+	fake.listOrganizationProjectsMutex.Lock()
+	defer fake.listOrganizationProjectsMutex.Unlock()
+	fake.ListOrganizationProjectsStub = nil
+	fake.listOrganizationProjectsReturns = struct {
 		result1 []*models.Project
 		result2 error
 	}{result1, result2}
 }
 
-func (fake *FakeGithub) ListProjectsReturnsOnCall(i int, result1 []*models.Project, result2 error) {
-	fake.listProjectsMutex.Lock()
-	defer fake.listProjectsMutex.Unlock()
-	fake.ListProjectsStub = nil
-	if fake.listProjectsReturnsOnCall == nil {
-		fake.listProjectsReturnsOnCall = make(map[int]struct {
+func (fake *FakeGithub) ListOrganizationProjectsReturnsOnCall(i int, result1 []*models.Project, result2 error) {
+	fake.listOrganizationProjectsMutex.Lock()
+	defer fake.listOrganizationProjectsMutex.Unlock()
+	fake.ListOrganizationProjectsStub = nil
+	if fake.listOrganizationProjectsReturnsOnCall == nil {
+		fake.listOrganizationProjectsReturnsOnCall = make(map[int]struct {
 			result1 []*models.Project
 			result2 error
 		})
 	}
-	fake.listProjectsReturnsOnCall[i] = struct {
+	fake.listOrganizationProjectsReturnsOnCall[i] = struct {
+		result1 []*models.Project
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeGithub) ListRepositoryProjects(arg1 context.Context, arg2 string, arg3 string, arg4 *models.ListOptions) ([]*models.Project, error) {
+	fake.listRepositoryProjectsMutex.Lock()
+	ret, specificReturn := fake.listRepositoryProjectsReturnsOnCall[len(fake.listRepositoryProjectsArgsForCall)]
+	fake.listRepositoryProjectsArgsForCall = append(fake.listRepositoryProjectsArgsForCall, struct {
+		arg1 context.Context
+		arg2 string
+		arg3 string
+		arg4 *models.ListOptions
+	}{arg1, arg2, arg3, arg4})
+	stub := fake.ListRepositoryProjectsStub
+	fakeReturns := fake.listRepositoryProjectsReturns
+	fake.recordInvocation("ListRepositoryProjects", []interface{}{arg1, arg2, arg3, arg4})
+	fake.listRepositoryProjectsMutex.Unlock()
+	if stub != nil {
+		return stub(arg1, arg2, arg3, arg4)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeGithub) ListRepositoryProjectsCallCount() int {
+	fake.listRepositoryProjectsMutex.RLock()
+	defer fake.listRepositoryProjectsMutex.RUnlock()
+	return len(fake.listRepositoryProjectsArgsForCall)
+}
+
+func (fake *FakeGithub) ListRepositoryProjectsCalls(stub func(context.Context, string, string, *models.ListOptions) ([]*models.Project, error)) {
+	fake.listRepositoryProjectsMutex.Lock()
+	defer fake.listRepositoryProjectsMutex.Unlock()
+	fake.ListRepositoryProjectsStub = stub
+}
+
+func (fake *FakeGithub) ListRepositoryProjectsArgsForCall(i int) (context.Context, string, string, *models.ListOptions) {
+	fake.listRepositoryProjectsMutex.RLock()
+	defer fake.listRepositoryProjectsMutex.RUnlock()
+	argsForCall := fake.listRepositoryProjectsArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3, argsForCall.arg4
+}
+
+func (fake *FakeGithub) ListRepositoryProjectsReturns(result1 []*models.Project, result2 error) {
+	fake.listRepositoryProjectsMutex.Lock()
+	defer fake.listRepositoryProjectsMutex.Unlock()
+	fake.ListRepositoryProjectsStub = nil
+	fake.listRepositoryProjectsReturns = struct {
+		result1 []*models.Project
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeGithub) ListRepositoryProjectsReturnsOnCall(i int, result1 []*models.Project, result2 error) {
+	fake.listRepositoryProjectsMutex.Lock()
+	defer fake.listRepositoryProjectsMutex.Unlock()
+	fake.ListRepositoryProjectsStub = nil
+	if fake.listRepositoryProjectsReturnsOnCall == nil {
+		fake.listRepositoryProjectsReturnsOnCall = make(map[int]struct {
+			result1 []*models.Project
+			result2 error
+		})
+	}
+	fake.listRepositoryProjectsReturnsOnCall[i] = struct {
 		result1 []*models.Project
 		result2 error
 	}{result1, result2}
@@ -179,8 +341,12 @@ func (fake *FakeGithub) Invocations() map[string][][]interface{} {
 	defer fake.invocationsMutex.RUnlock()
 	fake.getProjectMutex.RLock()
 	defer fake.getProjectMutex.RUnlock()
-	fake.listProjectsMutex.RLock()
-	defer fake.listProjectsMutex.RUnlock()
+	fake.getProjectDataMutex.RLock()
+	defer fake.getProjectDataMutex.RUnlock()
+	fake.listOrganizationProjectsMutex.RLock()
+	defer fake.listOrganizationProjectsMutex.RUnlock()
+	fake.listRepositoryProjectsMutex.RLock()
+	defer fake.listRepositoryProjectsMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value
