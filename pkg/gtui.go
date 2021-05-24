@@ -36,6 +36,22 @@ func NewGTUIClient(cfg Config, deps Dependencies) *GTUIClient {
 
 // Start launches the GTUI App.
 func (g *GTUIClient) Start() error {
+
+	// Show based on what's provided?
+	if g.ProjectID != -1 {
+		return g.showProjectData()
+	}
+	if g.Repository != "" && g.Organization != "" {
+		if err := g.showRepositoryProjectSelector(); err != nil {
+			g.Logger.Debug().Err(err).Msg("Failed to show repository project selector.")
+			return err
+		}
+	} else if g.Organization != "" && g.Repository == "" {
+		if err := g.showOrganizationProjectSelector(); err != nil {
+			g.Logger.Debug().Err(err).Msg("Failed to show organization project selector.")
+			return err
+		}
+	}
 	project, err := g.Github.GetProjectData(context.Background(), g.ProjectID)
 	if err != nil {
 		g.Logger.Debug().Err(err).Msg("Failed to get project data.")
@@ -55,5 +71,19 @@ func (g *GTUIClient) Start() error {
 	//if err := app.SetRoot(flex, true).SetFocus(flex).Run(); err != nil {
 	//	return err
 	//}
+	return nil
+}
+
+func (g *GTUIClient) showRepositoryProjectSelector() error {
+	// call show project data after user selected a project and projectID has been set on `g` receiver
+	return nil
+}
+
+func (g *GTUIClient) showOrganizationProjectSelector() error {
+	// call show project data after user selected a project and projectID has been set on `g` receiver
+	return nil
+}
+
+func (g *GTUIClient) showProjectData() error {
 	return nil
 }
