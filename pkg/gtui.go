@@ -10,6 +10,9 @@ import (
 
 // Config contains configuration properties for GTUI.
 type Config struct {
+	Organization string
+	Repository   string
+	ProjectID    int64
 }
 
 type Dependencies struct {
@@ -33,7 +36,7 @@ func NewGTUIClient(cfg Config, deps Dependencies) *GTUIClient {
 
 // Start launches the GTUI App.
 func (g *GTUIClient) Start() error {
-	project, err := g.Github.GetProjectData(context.Background(), 10308512)
+	project, err := g.Github.GetProjectData(context.Background(), g.ProjectID)
 	if err != nil {
 		g.Logger.Debug().Err(err).Msg("Failed to get project data.")
 		return err
