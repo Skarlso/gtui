@@ -48,6 +48,10 @@ func init() {
 }
 
 func runRootCmd(cmd *cobra.Command, args []string) {
+	if rootArgs.Organization == "" && rootArgs.Repository == "" && rootArgs.ProjectID == -1 {
+		fmt.Println("Please provide either repository, organization or project id.")
+		os.Exit(1)
+	}
 	logger := zerolog.New(zerolog.ConsoleWriter{
 		Out: os.Stderr,
 	}).With().Timestamp().Logger()

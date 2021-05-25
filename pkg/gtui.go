@@ -1,11 +1,10 @@
 package pkg
 
 import (
-	"context"
-	"fmt"
+	"github.com/rivo/tview"
+	"github.com/rs/zerolog"
 
 	"github.com/Skarlso/gtui/pkg/providers"
-	"github.com/rs/zerolog"
 )
 
 // Config contains configuration properties for GTUI.
@@ -24,6 +23,9 @@ type Dependencies struct {
 type GTUIClient struct {
 	Config
 	Dependencies
+
+	app    *tview.Application
+	middle *tview.Box
 }
 
 // NewGTUIClient creates a tui client with all the configs and dependencies needed.
@@ -36,12 +38,16 @@ func NewGTUIClient(cfg Config, deps Dependencies) *GTUIClient {
 
 // Start launches the GTUI App.
 func (g *GTUIClient) Start() error {
-
 	// Show based on what's provided?
+	app := tview.NewApplication()
+	middle := tview.NewBox().SetBorder(true).SetTitle("Middle (3 x height of Top)")
+	g.app = app
+	g.middle = middle
 	if g.ProjectID != -1 {
-		return g.showProjectData()
-	}
-	if g.Repository != "" && g.Organization != "" {
+		if err := g.showProjectData(); err != nil {
+			return err
+		}
+	} else if g.Repository != "" && g.Organization != "" {
 		if err := g.showRepositoryProjectSelector(); err != nil {
 			g.Logger.Debug().Err(err).Msg("Failed to show repository project selector.")
 			return err
@@ -52,25 +58,17 @@ func (g *GTUIClient) Start() error {
 			return err
 		}
 	}
-	project, err := g.Github.GetProjectData(context.Background(), g.ProjectID)
-	if err != nil {
-		g.Logger.Debug().Err(err).Msg("Failed to get project data.")
+	flex := tview.NewFlex().
+		AddItem(tview.NewBox().SetBorder(true).SetTitle("Left (1/2 x width of Top)"), 0, 1, false).
+		AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
+			AddItem(tview.NewBox().SetBorder(true).SetTitle("GTUI"), 0, 1, false).
+			AddItem(middle, 0, 3, false).
+			AddItem(tview.NewBox().SetBorder(true).SetTitle("Bottom (5 rows)"), 5, 1, false), 0, 2, false).
+		AddItem(tview.NewBox().SetBorder(true).SetTitle("Right (20 cols)"), 20, 1, false)
+	g.app = app
+	if err := app.SetRoot(flex, true).SetFocus(flex).Run(); err != nil {
 		return err
 	}
-	for _, c := range project.ProjectColumns {
-		fmt.Println(c)
-	}
-	//app := tview.NewApplication()
-	//flex := tview.NewFlex().
-	//	AddItem(tview.NewBox().SetBorder(true).SetTitle("Left (1/2 x width of Top)"), 0, 1, false).
-	//	AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
-	//		AddItem(tview.NewBox().SetBorder(true).SetTitle("Top"), 0, 1, false).
-	//		AddItem(tview.NewBox().SetBorder(true).SetTitle("Middle (3 x height of Top)"), 0, 3, false).
-	//		AddItem(tview.NewBox().SetBorder(true).SetTitle("Bottom (5 rows)"), 5, 1, false), 0, 2, false).
-	//	AddItem(tview.NewBox().SetBorder(true).SetTitle("Right (20 cols)"), 20, 1, false)
-	//if err := app.SetRoot(flex, true).SetFocus(flex).Run(); err != nil {
-	//	return err
-	//}
 	return nil
 }
 
@@ -85,5 +83,7 @@ func (g *GTUIClient) showOrganizationProjectSelector() error {
 }
 
 func (g *GTUIClient) showProjectData() error {
+	// update the app
+	g.middle.SetTitle("Project board")
 	return nil
 }
