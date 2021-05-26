@@ -24,8 +24,9 @@ type GTUIClient struct {
 	Config
 	Dependencies
 
-	app    *tview.Application
-	middle *tview.Box
+	app         *tview.Application
+	middleFlex  *tview.Flex
+	projectList *tview.List
 }
 
 // NewGTUIClient creates a tui client with all the configs and dependencies needed.
@@ -40,9 +41,12 @@ func NewGTUIClient(cfg Config, deps Dependencies) *GTUIClient {
 func (g *GTUIClient) Start() error {
 	// Show based on what's provided?
 	app := tview.NewApplication()
-	middle := tview.NewBox().SetBorder(true).SetTitle("Middle (3 x height of Top)")
+	projectList := tview.NewList().AddItem("Project Selector", "", 'p', nil).AddItem("one more", "", 'p', nil)
+	middleFlex := tview.NewFlex()
 	g.app = app
-	g.middle = middle
+	g.middleFlex = middleFlex
+	g.projectList = projectList
+
 	if g.ProjectID != -1 {
 		if err := g.showProjectData(); err != nil {
 			return err
@@ -59,12 +63,9 @@ func (g *GTUIClient) Start() error {
 		}
 	}
 	flex := tview.NewFlex().
-		AddItem(tview.NewBox().SetBorder(true).SetTitle("Left (1/2 x width of Top)"), 0, 1, false).
 		AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
-			AddItem(tview.NewBox().SetBorder(true).SetTitle("GTUI"), 0, 1, false).
-			AddItem(middle, 0, 3, false).
-			AddItem(tview.NewBox().SetBorder(true).SetTitle("Bottom (5 rows)"), 5, 1, false), 0, 2, false).
-		AddItem(tview.NewBox().SetBorder(true).SetTitle("Right (20 cols)"), 20, 1, false)
+			AddItem(tview.NewBox().SetBorder(true).SetTitle("GTUI"), 5, 1, false).
+			AddItem(middleFlex, 0, 1, true), 0, 1, true)
 	g.app = app
 	if err := app.SetRoot(flex, true).SetFocus(flex).Run(); err != nil {
 		return err
@@ -84,6 +85,8 @@ func (g *GTUIClient) showOrganizationProjectSelector() error {
 
 func (g *GTUIClient) showProjectData() error {
 	// update the app
-	g.middle.SetTitle("Project board")
+	//g.middle.SetTitle("Project board")
+	g.middleFlex.SetBorder(true).SetTitle("Project Selector")
+	g.middleFlex.AddItem(g.projectList, 0, 1, true)
 	return nil
 }
