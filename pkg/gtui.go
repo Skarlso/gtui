@@ -1,8 +1,10 @@
 package pkg
 
 import (
-	"time"
+	"context"
+	"fmt"
 
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/rs/zerolog"
 
@@ -26,9 +28,8 @@ type GTUIClient struct {
 	Config
 	Dependencies
 
-	app         *tview.Application
-	middleFlex  *tview.Flex
-	projectList *tview.List
+	app        *tview.Application
+	middleFlex *tview.Flex
 }
 
 // NewGTUIClient creates a tui client with all the configs and dependencies needed.
@@ -43,27 +44,9 @@ func NewGTUIClient(cfg Config, deps Dependencies) *GTUIClient {
 func (g *GTUIClient) Start() error {
 	// Show based on what's provided?
 	app := tview.NewApplication()
-	projectList := tview.NewList().ShowSecondaryText(false)
 	middleFlex := tview.NewFlex()
 	g.app = app
 	g.middleFlex = middleFlex
-	g.projectList = projectList
-
-	go func() {
-		time.Sleep(3 * time.Second)
-		//g.middleFlex = tview.NewFlex()
-		//list := tview.NewList().ShowSecondaryText(false)
-		//list.AddItem("new stuff", "", 0, nil)
-		//g.middleFlex.AddItem(list, 0, 4, true)
-		g.middleFlex.SetTitle("UPDATED")
-		g.middleFlex.Clear() // Remove all items instead of RemoveItem!
-		list := tview.NewList()
-		list.SetBorder(true).SetTitle("NewList")
-		list.AddItem("new", "", 0, nil)
-		g.middleFlex.AddItem(list, 0, 4, true)
-		g.app.Draw()
-	}()
-
 	if g.ProjectID != -1 {
 		if err := g.showProjectData(); err != nil {
 			return err
@@ -84,7 +67,7 @@ func (g *GTUIClient) Start() error {
 			AddItem(tview.NewBox().SetBorder(true).SetTitle("GTUI"), 5, 1, false).
 			AddItem(middleFlex, 0, 1, true), 0, 1, true)
 	g.app = app
-	if err := app.SetRoot(flex, true).SetFocus(flex).Run(); err != nil {
+	if err := app.SetRoot(flex, true).EnableMouse(true).SetFocus(flex).Run(); err != nil {
 		return err
 	}
 	return nil
@@ -101,10 +84,30 @@ func (g *GTUIClient) showOrganizationProjectSelector() error {
 }
 
 func (g *GTUIClient) showProjectData() error {
-	// update the app
-	//g.middle.SetTitle("Project board")
-	g.middleFlex.SetBorder(true).SetTitle("Project Selector")
-	g.projectList.AddItem("project", "", 0, nil)
-	g.middleFlex.AddItem(g.projectList, 0, 1, true)
+	data, err := g.Github.GetProjectData(context.Background(), g.ProjectID)
+	if err != nil {
+		g.Logger.Debug().Err(err).Int64("project_id", g.ProjectID).Msg("Failed to get project data")
+		return err
+	}
+	g.middleFlex.SetBorder(true).SetTitle(fmt.Sprintf("Project #%d", g.ProjectID))
+	for _, c := range data.ProjectColumns {
+		textView := tview.NewTextView()
+		textView.SetWordWrap(true)
+		list := tview.NewList()
+		list.SetBorder(true)
+		list.SetTitle(c.Name)
+		list.SetWrapAround(true)
+		for _, card := range c.ProjectColumnCards {
+			var secondaryTest string
+			if card.Note != nil {
+				secondaryTest = *card.Note
+			}
+			list.AddItem(card.Title, secondaryTest, 0, nil)
+		}
+		list.SetSelectedBackgroundColor(tcell.ColorYellow)
+		// This is the one that I have to implement. As secondary text set the ISSUEID and then hide it.
+		//list.SetSelectedFunc()
+		g.middleFlex.AddItem(list, 0, 1, true)
+	}
 	return nil
 }

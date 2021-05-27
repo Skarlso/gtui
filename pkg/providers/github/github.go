@@ -2,21 +2,31 @@ package github
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"io/ioutil"
+	"regexp"
+	"strconv"
 	"time"
 
-	"github.com/Skarlso/gtui/pkg/providers"
+	"golang.org/x/sync/semaphore"
 
-	"github.com/Skarlso/gtui/models"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/google/go-github/v35/github"
 	"github.com/rs/zerolog"
 	"golang.org/x/oauth2"
+
+	"github.com/Skarlso/gtui/models"
+	"github.com/Skarlso/gtui/pkg/providers"
 )
+
+var repoExtract = regexp.MustCompile(`repos/(.*)/(.*)/issues/(\d+)`)
 
 // Config .
 type Config struct {
-	Token string
-	// TODO add some more like pagination and shit
+	Token       string
+	MaxFetchers int64
 }
 
 // GithubProvider .
@@ -140,7 +150,7 @@ func (g *GithubProvider) GetProject(ctx context.Context, id int64) (*models.Proj
 
 // GetProjectData returns all the columns with all the cards in the columns.
 func (g *GithubProvider) GetProjectData(ctx context.Context, projectID int64) (*models.ProjectData, error) {
-	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 	opts := &github.ListOptions{
 		PerPage: 10,
@@ -187,12 +197,46 @@ func (g *GithubProvider) GetProjectData(ctx context.Context, projectID int64) (*
 			ID:   c.GetID(),
 		}
 		cards := make([]*models.ProjectColumnCard, 0)
+		e, ctx := errgroup.WithContext(ctx)
+		sem := semaphore.NewWeighted(g.MaxFetchers)
 		for _, card := range allCards {
-			// TODO: get card content for preview. It's an issue -> get issue by ID. If it's a note, the note
-			// field will be not nil.
-			cards = append(cards, &models.ProjectColumnCard{
-				ID: card.GetID(),
+			card := card
+			e.Go(func() error {
+				if err := sem.Acquire(ctx, 1); err != nil {
+					return err
+				}
+				defer sem.Release(1)
+				m := repoExtract.FindAllStringSubmatch(card.GetContentURL(), -1)
+				if len(m) == 0 {
+					g.Logger.Error().Str("url", card.GetContentURL()).Msg("Failed to extract repo owner data for url.")
+					return errors.New("failed to extract repo owner data for card")
+				}
+				if len(m[0]) < 3 {
+					g.Logger.Error().Str("url", card.GetContentURL()).Strs("matches", m[0]).Msg("Match groups didn't match 3.")
+					return errors.New("failed to match repo, owner, issue id from url")
+				}
+				owner, repo, issueID := m[0][1], m[0][2], m[0][3]
+				iID, err := strconv.Atoi(issueID)
+				if err != nil {
+					g.Logger.Debug().Err(err).Str("id", issueID).Msg("Failed to convert issue ID number to string.")
+					return err
+				}
+				issue, response, err := g.Client.Issues.Get(ctx, owner, repo, iID)
+				if err != nil {
+					g.logGithubResponseBody(response)
+					return err
+				}
+				cards = append(cards, &models.ProjectColumnCard{
+					ID:      card.GetID(),
+					Note:    card.Note,
+					Title:   issue.GetTitle(),
+					Content: issue.GetBody(),
+				})
+				return nil
 			})
+		}
+		if err := e.Wait(); err != nil {
+			return nil, fmt.Errorf("failed to wait for all workers to finish fetching cards: %w", err)
 		}
 		col.ProjectColumnCards = cards
 		data.ProjectColumns = append(data.ProjectColumns, col)
