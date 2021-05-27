@@ -56,7 +56,7 @@ func (g *GTUIClient) Start() error {
 		//list.AddItem("new stuff", "", 0, nil)
 		//g.middleFlex.AddItem(list, 0, 4, true)
 		g.middleFlex.SetTitle("UPDATED")
-		g.middleFlex.RemoveItem(g.projectList)
+		g.middleFlex.Clear() // Remove all items instead of RemoveItem!
 		list := tview.NewList()
 		list.SetBorder(true).SetTitle("NewList")
 		list.AddItem("new", "", 0, nil)
