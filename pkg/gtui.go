@@ -1,6 +1,8 @@
 package pkg
 
 import (
+	"time"
+
 	"github.com/rivo/tview"
 	"github.com/rs/zerolog"
 
@@ -41,11 +43,26 @@ func NewGTUIClient(cfg Config, deps Dependencies) *GTUIClient {
 func (g *GTUIClient) Start() error {
 	// Show based on what's provided?
 	app := tview.NewApplication()
-	projectList := tview.NewList().AddItem("Project Selector", "", 'p', nil).AddItem("one more", "", 'p', nil)
+	projectList := tview.NewList().ShowSecondaryText(false)
 	middleFlex := tview.NewFlex()
 	g.app = app
 	g.middleFlex = middleFlex
 	g.projectList = projectList
+
+	go func() {
+		time.Sleep(3 * time.Second)
+		//g.middleFlex = tview.NewFlex()
+		//list := tview.NewList().ShowSecondaryText(false)
+		//list.AddItem("new stuff", "", 0, nil)
+		//g.middleFlex.AddItem(list, 0, 4, true)
+		g.middleFlex.SetTitle("UPDATED")
+		g.middleFlex.RemoveItem(g.projectList)
+		list := tview.NewList()
+		list.SetBorder(true).SetTitle("NewList")
+		list.AddItem("new", "", 0, nil)
+		g.middleFlex.AddItem(list, 0, 4, true)
+		g.app.Draw()
+	}()
 
 	if g.ProjectID != -1 {
 		if err := g.showProjectData(); err != nil {
@@ -87,6 +104,7 @@ func (g *GTUIClient) showProjectData() error {
 	// update the app
 	//g.middle.SetTitle("Project board")
 	g.middleFlex.SetBorder(true).SetTitle("Project Selector")
+	g.projectList.AddItem("project", "", 0, nil)
 	g.middleFlex.AddItem(g.projectList, 0, 1, true)
 	return nil
 }
