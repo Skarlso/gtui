@@ -9,13 +9,11 @@ import (
 	"strconv"
 	"time"
 
-	"golang.org/x/sync/semaphore"
-
-	"golang.org/x/sync/errgroup"
-
 	"github.com/google/go-github/v35/github"
 	"github.com/rs/zerolog"
 	"golang.org/x/oauth2"
+	"golang.org/x/sync/errgroup"
+	"golang.org/x/sync/semaphore"
 
 	"github.com/Skarlso/gtui/models"
 	"github.com/Skarlso/gtui/pkg/providers"
@@ -56,7 +54,7 @@ func (g *GithubProvider) ListRepositoryProjects(ctx context.Context, repo, owner
 	defer cancel()
 	var (
 		page    int
-		perPage = 10
+		perPage = 100
 	)
 	if opts != nil {
 		page = opts.Page
@@ -97,7 +95,7 @@ func (g *GithubProvider) ListOrganizationProjects(ctx context.Context, org strin
 	defer cancel()
 	var (
 		page    int
-		perPage = 10
+		perPage = 100
 	)
 	if opts != nil {
 		page = opts.Page
@@ -153,7 +151,7 @@ func (g *GithubProvider) GetProjectData(ctx context.Context, projectID int64) (*
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 	opts := &github.ListOptions{
-		PerPage: 10,
+		PerPage: 100,
 	}
 	allColumns := make([]*github.ProjectColumn, 0)
 
@@ -226,11 +224,17 @@ func (g *GithubProvider) GetProjectData(ctx context.Context, projectID int64) (*
 					g.logGithubResponseBody(response)
 					return err
 				}
+				assignee := "-"
+				if issue.Assignee != nil {
+					assignee = issue.Assignee.GetLogin()
+				}
 				cards = append(cards, &models.ProjectColumnCard{
-					ID:      card.GetID(),
-					Note:    card.Note,
-					Title:   issue.GetTitle(),
-					Content: issue.GetBody(),
+					ID:       card.GetID(),
+					Note:     card.Note,
+					Title:    issue.GetTitle(),
+					Content:  issue.GetBody(),
+					Author:   issue.GetUser().GetLogin(),
+					Assignee: assignee,
 				})
 				return nil
 			})

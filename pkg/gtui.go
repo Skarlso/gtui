@@ -98,11 +98,12 @@ func (g *GTUIClient) showProjectData() error {
 		list.SetTitle(c.Name)
 		list.SetWrapAround(true)
 		for _, card := range c.ProjectColumnCards {
-			var secondaryTest string
+			title := card.Title
 			if card.Note != nil {
-				secondaryTest = *card.Note
+				title = *card.Note
 			}
-			list.AddItem(card.Title, secondaryTest, 0, nil)
+			secondaryText := fmt.Sprintf("Author: %s, Assigned To: %s", card.Author, card.Assignee)
+			list.AddItem(title, secondaryText, 0, nil)
 		}
 		list.SetSelectedBackgroundColor(tcell.ColorYellow)
 		// This is the one that I have to implement. As secondary text set the ISSUEID and then hide it.

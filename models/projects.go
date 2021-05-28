@@ -15,12 +15,14 @@ type ProjectColumn struct {
 
 // ProjectColumnCard .
 type ProjectColumnCard struct {
-	ID      int64
-	IssueID int64
-	Content string
-	Title   string
-	Name    string
-	Note    *string
+	ID       int64
+	IssueID  int64
+	Content  string
+	Title    string
+	Name     string
+	Note     *string
+	Author   string
+	Assignee string
 }
 
 // ProjectData .

@@ -41,7 +41,7 @@ func init() {
 	f.StringVar(&rootArgs.Organization, "organization", "", "The organization / owner of the project or the repository to select")
 	f.StringVar(&rootArgs.Repository, "repository", "", "The repository which contains projects to select")
 	f.Int64Var(&rootArgs.ProjectID, "project-id", -1, "If provided, gtui will immediately open this project")
-	f.Int64Var(&rootArgs.MaxFetchers, "max-fetchers", 10, "The number of parallel fetching done for card details")
+	f.Int64Var(&rootArgs.MaxFetchers, "max-fetchers", 20, "The number of parallel fetching done for card details")
 
 	if token == "" {
 		fmt.Println("Token is empty. Please either provide one with --token or use GTUI_TOKEN environment property.")
