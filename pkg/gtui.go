@@ -3,6 +3,8 @@ package pkg
 import (
 	"context"
 	"fmt"
+	"regexp"
+	"strconv"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -11,11 +13,14 @@ import (
 	"github.com/Skarlso/gtui/pkg/providers"
 )
 
+var issueID = regexp.MustCompile(`IssueID: (\d+)`)
+
 // Config contains configuration properties for GTUI.
 type Config struct {
-	Organization string
-	Repository   string
-	ProjectID    int64
+	Organization   string
+	Repository     string
+	ProjectID      int64
+	ColumnsPerPage int
 }
 
 type Dependencies struct {
@@ -32,6 +37,7 @@ type GTUIClient struct {
 	middleFlex *tview.Flex
 	status     *tview.TextView
 	lists      []*tview.List
+	issueMap   map[int]string
 }
 
 // NewGTUIClient creates a tui client with all the configs and dependencies needed.
@@ -39,6 +45,7 @@ func NewGTUIClient(cfg Config, deps Dependencies) *GTUIClient {
 	return &GTUIClient{
 		Dependencies: deps,
 		Config:       cfg,
+		issueMap:     make(map[int]string),
 	}
 }
 
@@ -46,6 +53,7 @@ func NewGTUIClient(cfg Config, deps Dependencies) *GTUIClient {
 func (g *GTUIClient) Start() error {
 	// Show based on what's provided?
 	app := tview.NewApplication()
+	//pages := tview.NewPages()
 	middleFlex := tview.NewFlex()
 	status := tview.NewTextView()
 	status.SetTitle("[red]Welcome To GTUI")
@@ -109,6 +117,7 @@ func (g *GTUIClient) showProjectData() error {
 		list.SetSecondaryTextColor(tcell.ColorLightGreen)
 		list.SetTitleColor(tcell.ColorLightGoldenrodYellow)
 		for _, card := range c.ProjectColumnCards {
+			g.issueMap[int(card.ID)] = card.Content
 			title := card.Title
 			secondaryText := fmt.Sprintf("Author: %s, Assignee: %s, IssueID: %d", card.Author, card.Assignee, card.IssueID)
 			if card.Note != nil {
@@ -143,7 +152,25 @@ func (g *GTUIClient) showProjectData() error {
 
 // ListEnterHandler handles issue enter presses for a list.
 func (g *GTUIClient) ListEnterHandler(i int, mainText string, secondaryText string, shortcut rune) {
-	g.status.SetText(fmt.Sprintf("%s, %s", mainText, secondaryText))
+	content := mainText
+	if secondaryText != "" {
+		m := issueID.FindAllStringSubmatch(secondaryText, -1)
+		if len(m) == 0 {
+			g.status.SetText("[red]failed to match out issue code")
+			return
+		}
+		if len(m[0]) < 1 {
+			g.status.SetText("[red]failed to parse out issue ID")
+			return
+		}
+		i, err := strconv.Atoi(m[0][1])
+		if err != nil {
+			g.status.SetText(err.Error())
+			return
+		}
+		content = g.issueMap[i]
+	}
+	g.status.SetText(content)
 }
 
 func (g *GTUIClient) cycleFocus(reverse bool) {

@@ -25,11 +25,12 @@ var (
 	}
 	// rootArgs define the root arguments for all commands.
 	rootArgs struct {
-		Token        string
-		Organization string
-		Repository   string
-		ProjectID    int64
-		MaxFetchers  int64
+		Token          string
+		Organization   string
+		Repository     string
+		ProjectID      int64
+		MaxFetchers    int64
+		ColumnsPerPage int
 	}
 )
 
@@ -42,6 +43,7 @@ func init() {
 	f.StringVar(&rootArgs.Repository, "repository", "", "The repository which contains projects to select")
 	f.Int64Var(&rootArgs.ProjectID, "project-id", -1, "If provided, gtui will immediately open this project")
 	f.Int64Var(&rootArgs.MaxFetchers, "max-fetchers", 20, "The number of parallel fetching done for card details")
+	f.IntVar(&rootArgs.ColumnsPerPage, "columns-per-page", 6, "The number of maximum columns per page")
 
 	if token == "" {
 		fmt.Println("Token is empty. Please either provide one with --token or use GTUI_TOKEN environment property.")
@@ -62,9 +64,10 @@ func runRootCmd(cmd *cobra.Command, args []string) {
 		MaxFetchers: rootArgs.MaxFetchers,
 	}, logger)
 	gtui := pkg.NewGTUIClient(pkg.Config{
-		Organization: rootArgs.Organization,
-		Repository:   rootArgs.Repository,
-		ProjectID:    rootArgs.ProjectID,
+		Organization:   rootArgs.Organization,
+		Repository:     rootArgs.Repository,
+		ProjectID:      rootArgs.ProjectID,
+		ColumnsPerPage: rootArgs.ColumnsPerPage,
 	}, pkg.Dependencies{
 		Github: githubProvider,
 		Logger: logger,
