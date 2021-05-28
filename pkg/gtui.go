@@ -30,6 +30,8 @@ type GTUIClient struct {
 
 	app        *tview.Application
 	middleFlex *tview.Flex
+	status     *tview.TextView
+	lists      []*tview.List
 }
 
 // NewGTUIClient creates a tui client with all the configs and dependencies needed.
@@ -45,8 +47,14 @@ func (g *GTUIClient) Start() error {
 	// Show based on what's provided?
 	app := tview.NewApplication()
 	middleFlex := tview.NewFlex()
+	status := tview.NewTextView()
+	status.SetTitle("[red]Welcome To GTUI")
+	status.SetBorder(true)
+	status.SetWordWrap(true)
+	status.SetDynamicColors(true)
 	g.app = app
 	g.middleFlex = middleFlex
+	g.status = status
 	if g.ProjectID != -1 {
 		if err := g.showProjectData(); err != nil {
 			return err
@@ -64,7 +72,7 @@ func (g *GTUIClient) Start() error {
 	}
 	flex := tview.NewFlex().
 		AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
-			AddItem(tview.NewBox().SetBorder(true).SetTitle("GTUI"), 5, 1, false).
+			AddItem(status, 5, 1, false).
 			AddItem(middleFlex, 0, 1, true), 0, 1, true)
 	g.app = app
 	if err := app.SetRoot(flex, true).EnableMouse(true).SetFocus(flex).Run(); err != nil {
@@ -99,16 +107,54 @@ func (g *GTUIClient) showProjectData() error {
 		list.SetWrapAround(true)
 		for _, card := range c.ProjectColumnCards {
 			title := card.Title
+			secondaryText := fmt.Sprintf("Author: %s, Assigned To: %s, IssueID: %d", card.Author, card.Assignee, card.IssueID)
 			if card.Note != nil {
-				title = *card.Note
+				title = fmt.Sprintf("[gray]%s", *card.Note)
+				secondaryText = ""
 			}
-			secondaryText := fmt.Sprintf("Author: %s, Assigned To: %s", card.Author, card.Assignee)
 			list.AddItem(title, secondaryText, 0, nil)
 		}
 		list.SetSelectedBackgroundColor(tcell.ColorYellow)
+		list.SetSelectedFocusOnly(true)
+		list.SetSelectedFunc(g.ListEnterHandler)
 		// This is the one that I have to implement. As secondary text set the ISSUEID and then hide it.
 		//list.SetSelectedFunc()
+		list.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+			if event.Key() == tcell.KeyTab {
+				g.cycleFocus(false)
+			} else if event.Key() == tcell.KeyBacktab {
+				g.cycleFocus(true)
+			}
+			return event
+		})
+		g.lists = append(g.lists, list)
 		g.middleFlex.AddItem(list, 0, 1, true)
 	}
 	return nil
+}
+
+// ListEnterHandler handles issue enter presses for a list.
+func (g *GTUIClient) ListEnterHandler(i int, mainText string, secondaryText string, shortcut rune) {
+	g.status.SetText(fmt.Sprintf("Hit enter on: %d, %s, %s", i, mainText, secondaryText))
+}
+
+func (g *GTUIClient) cycleFocus(reverse bool) {
+	for i, el := range g.lists {
+		if !el.HasFocus() {
+			continue
+		}
+
+		if reverse {
+			i = i - 1
+			if i < 0 {
+				i = len(g.lists) - 1
+			}
+		} else {
+			i = i + 1
+			i = i % len(g.lists)
+		}
+
+		g.app.SetFocus(g.lists[i])
+		return
+	}
 }

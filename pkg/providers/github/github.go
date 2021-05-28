@@ -204,6 +204,15 @@ func (g *GithubProvider) GetProjectData(ctx context.Context, projectID int64) (*
 					return err
 				}
 				defer sem.Release(1)
+
+				if card.Note != nil {
+					cards = append(cards, &models.ProjectColumnCard{
+						ID:   card.GetID(),
+						Note: card.Note,
+					})
+					return nil
+				}
+
 				m := repoExtract.FindAllStringSubmatch(card.GetContentURL(), -1)
 				if len(m) == 0 {
 					g.Logger.Error().Str("url", card.GetContentURL()).Msg("Failed to extract repo owner data for url.")
@@ -235,6 +244,7 @@ func (g *GithubProvider) GetProjectData(ctx context.Context, projectID int64) (*
 					Content:  issue.GetBody(),
 					Author:   issue.GetUser().GetLogin(),
 					Assignee: assignee,
+					IssueID:  issue.GetID(),
 				})
 				return nil
 			})
