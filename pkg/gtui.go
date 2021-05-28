@@ -105,20 +105,22 @@ func (g *GTUIClient) showProjectData() error {
 		list.SetBorder(true)
 		list.SetTitle(c.Name)
 		list.SetWrapAround(true)
+		list.SetMainTextColor(tcell.ColorRed)
+		list.SetSecondaryTextColor(tcell.ColorLightGreen)
+		list.SetTitleColor(tcell.ColorLightGoldenrodYellow)
 		for _, card := range c.ProjectColumnCards {
 			title := card.Title
-			secondaryText := fmt.Sprintf("Author: %s, Assigned To: %s, IssueID: %d", card.Author, card.Assignee, card.IssueID)
+			secondaryText := fmt.Sprintf("Author: %s, Assignee: %s, IssueID: %d", card.Author, card.Assignee, card.IssueID)
 			if card.Note != nil {
 				title = fmt.Sprintf("[gray]%s", *card.Note)
 				secondaryText = ""
 			}
 			list.AddItem(title, secondaryText, 0, nil)
 		}
+		list.SetBorderColor(tcell.ColorMediumPurple)
 		list.SetSelectedBackgroundColor(tcell.ColorYellow)
 		list.SetSelectedFocusOnly(true)
 		list.SetSelectedFunc(g.ListEnterHandler)
-		// This is the one that I have to implement. As secondary text set the ISSUEID and then hide it.
-		//list.SetSelectedFunc()
 		list.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 			if event.Key() == tcell.KeyTab {
 				g.cycleFocus(false)
@@ -135,7 +137,7 @@ func (g *GTUIClient) showProjectData() error {
 
 // ListEnterHandler handles issue enter presses for a list.
 func (g *GTUIClient) ListEnterHandler(i int, mainText string, secondaryText string, shortcut rune) {
-	g.status.SetText(fmt.Sprintf("Hit enter on: %d, %s, %s", i, mainText, secondaryText))
+	g.status.SetText(fmt.Sprintf("%s, %s", mainText, secondaryText))
 }
 
 func (g *GTUIClient) cycleFocus(reverse bool) {
