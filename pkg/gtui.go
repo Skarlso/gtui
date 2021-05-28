@@ -105,7 +105,7 @@ func (g *GTUIClient) showProjectData() error {
 		list.SetBorder(true)
 		list.SetTitle(c.Name)
 		list.SetWrapAround(true)
-		list.SetMainTextColor(tcell.ColorRed)
+		//list.SetMainTextColor(tcell.ColorBlueViolet)
 		list.SetSecondaryTextColor(tcell.ColorLightGreen)
 		list.SetTitleColor(tcell.ColorLightGoldenrodYellow)
 		for _, card := range c.ProjectColumnCards {
@@ -131,6 +131,12 @@ func (g *GTUIClient) showProjectData() error {
 		})
 		g.lists = append(g.lists, list)
 		g.middleFlex.AddItem(list, 0, 1, true)
+		// launch background rest fetcher
+		go func(id int64, name string, l *tview.List) {
+			if err := g.Github.LoadRest(context.Background(), id, l); err != nil {
+				g.status.SetText(fmt.Sprintf("[red]Failed to fetch cards in the background for column %d with name %s", id, name))
+			}
+		}(c.ID, c.Name, list)
 	}
 	return nil
 }
