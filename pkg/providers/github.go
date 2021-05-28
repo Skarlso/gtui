@@ -3,6 +3,8 @@ package providers
 import (
 	"context"
 
+	"github.com/rivo/tview"
+
 	"github.com/Skarlso/gtui/models"
 )
 
@@ -17,4 +19,6 @@ type Github interface {
 	GetProject(ctx context.Context, id int64) (*models.Project, error)
 	// GetProjectData returns all the data for a project to show the project management page.
 	GetProjectData(ctx context.Context, id int64) (*models.ProjectData, error)
+	// LoadRest will fetch the rest of the cards if there are any.
+	LoadRest(ctx context.Context, columnID int64, list *tview.List) error
 }
