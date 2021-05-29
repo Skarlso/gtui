@@ -221,16 +221,13 @@ func (g *GTUIClient) cycleFocus(reverse bool) {
 			i = i % len(g.columns)
 		}
 
-		// This isn't working. Create some kind of structure where it's apparent on which page which list resides.
-		// and only switch if it's not the current page. list struct with a page and a list.
 		page := (i / g.ColumnsPerPage) + 1
 		if page == 0 {
 			page++
 		}
-		g.app.SetFocus(g.columns[i])
 		name := fmt.Sprintf("%d/%d", page, (len(g.columns)/g.ColumnsPerPage)+1)
-		g.status.SetText("Switching to: " + name)
 		g.pages.SwitchToPage(name)
+		g.app.SetFocus(g.columns[i])
 		return
 	}
 }
