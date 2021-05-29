@@ -13,7 +13,7 @@ import (
 	"github.com/Skarlso/gtui/pkg/providers"
 )
 
-var issueID = regexp.MustCompile(`IssueID: (\d+)`)
+var issueID = regexp.MustCompile(`IssueID: \[yellow\](\d+)\[lightgreen\]`)
 
 // Config contains configuration properties for GTUI.
 type Config struct {
@@ -33,11 +33,11 @@ type GTUIClient struct {
 	Config
 	Dependencies
 
-	app        *tview.Application
-	middleFlex *tview.Flex
-	status     *tview.TextView
-	lists      []*tview.List
-	issueMap   map[int]string
+	app      *tview.Application
+	status   *tview.TextView
+	columns  []*tview.List
+	issueMap map[int]string
+	pages    *tview.Pages
 }
 
 // NewGTUIClient creates a tui client with all the configs and dependencies needed.
@@ -53,16 +53,15 @@ func NewGTUIClient(cfg Config, deps Dependencies) *GTUIClient {
 func (g *GTUIClient) Start() error {
 	// Show based on what's provided?
 	app := tview.NewApplication()
-	//pages := tview.NewPages()
-	middleFlex := tview.NewFlex()
 	status := tview.NewTextView()
 	status.SetTitle("[red]Welcome To GTUI")
 	status.SetBorder(true)
 	status.SetWordWrap(true)
 	status.SetDynamicColors(true)
+	pages := tview.NewPages()
 	g.app = app
-	g.middleFlex = middleFlex
 	g.status = status
+	g.pages = pages
 	if g.ProjectID != -1 {
 		if err := g.showProjectData(); err != nil {
 			return err
@@ -80,8 +79,8 @@ func (g *GTUIClient) Start() error {
 	}
 	flex := tview.NewFlex().
 		AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
-			AddItem(status, 5, 1, false).
-			AddItem(middleFlex, 0, 1, true), 0, 1, true)
+			AddItem(status, 10, 1, false).
+			AddItem(g.pages, 0, 1, true), 0, 1, true)
 	g.app = app
 	if err := app.SetRoot(flex, true).EnableMouse(true).SetFocus(flex).Run(); err != nil {
 		return err
@@ -105,7 +104,9 @@ func (g *GTUIClient) showProjectData() error {
 		g.Logger.Debug().Err(err).Int64("project_id", g.ProjectID).Msg("Failed to get project data")
 		return err
 	}
-	g.middleFlex.SetBorder(true).SetTitle(fmt.Sprintf("Project #%d", g.ProjectID))
+	//flexes := make([]*tview.Flex, 0)
+	//middleFlex := tview.NewFlex()
+	//middleFlex.SetBorder(true).SetTitle(fmt.Sprintf("Project #%d", g.ProjectID))
 	for _, c := range data.ProjectColumns {
 		textView := tview.NewTextView()
 		textView.SetWordWrap(true)
@@ -117,9 +118,9 @@ func (g *GTUIClient) showProjectData() error {
 		list.SetSecondaryTextColor(tcell.ColorLightGreen)
 		list.SetTitleColor(tcell.ColorLightGoldenrodYellow)
 		for _, card := range c.ProjectColumnCards {
-			g.issueMap[int(card.ID)] = card.Content
+			g.issueMap[int(card.IssueID)] = card.Content
 			title := card.Title
-			secondaryText := fmt.Sprintf("Author: %s, Assignee: %s, IssueID: %d", card.Author, card.Assignee, card.IssueID)
+			secondaryText := fmt.Sprintf("Author: [yellow]%s[lightgreen], Assignee: [yellow]%s[lightgreen], IssueID: [yellow]%d[lightgreen]", card.Author, card.Assignee, card.IssueID)
 			if card.Note != nil {
 				title = fmt.Sprintf("[gray]%s", *card.Note)
 				secondaryText = ""
@@ -138,8 +139,8 @@ func (g *GTUIClient) showProjectData() error {
 			}
 			return event
 		})
-		g.lists = append(g.lists, list)
-		g.middleFlex.AddItem(list, 0, 1, true)
+		g.columns = append(g.columns, list)
+		//middleFlex.AddItem(list, 0, 1, true)
 		// launch background rest fetcher
 		go func(id int64, name string, l *tview.List) {
 			if err := g.Github.LoadRest(context.Background(), id, l); err != nil {
@@ -147,6 +148,37 @@ func (g *GTUIClient) showProjectData() error {
 			}
 		}(c.ID, c.Name, list)
 	}
+	// divi up the list and create groups of flexes and then create pages out of them
+	pages := make([]*tview.Flex, 0)
+	index := 0
+	for {
+		if index+g.ColumnsPerPage > len(g.columns) {
+			middleFlex := tview.NewFlex()
+			middleFlex.SetBorder(false)
+			for _, l := range g.columns[index:] {
+				middleFlex.AddItem(l, 0, 1, true)
+			}
+			pages = append(pages, middleFlex)
+			break
+		}
+		list := g.columns[index : index+g.ColumnsPerPage]
+		middleFlex := tview.NewFlex()
+		middleFlex.SetBorder(false)
+		for _, l := range list {
+			middleFlex.AddItem(l, 0, 1, true)
+		}
+		pages = append(pages, middleFlex)
+		index += g.ColumnsPerPage
+	}
+
+	for i, p := range pages {
+		name := fmt.Sprintf("%d/%d", i+1, len(pages))
+		g.pages.AddPage(name, p, true, true)
+	}
+	// focus on the first page
+	g.pages.SwitchToPage(fmt.Sprintf("1/%d", len(pages)))
+	g.pages.SetBorder(true)
+	g.pages.SetTitle(fmt.Sprintf("Project #%d (%d)", g.ProjectID, len(pages)))
 	return nil
 }
 
@@ -174,22 +206,31 @@ func (g *GTUIClient) ListEnterHandler(i int, mainText string, secondaryText stri
 }
 
 func (g *GTUIClient) cycleFocus(reverse bool) {
-	for i, el := range g.lists {
+	for i, el := range g.columns {
 		if !el.HasFocus() {
 			continue
 		}
 
 		if reverse {
-			i = i - 1
+			i--
 			if i < 0 {
-				i = len(g.lists) - 1
+				i = len(g.columns) - 1
 			}
 		} else {
-			i = i + 1
-			i = i % len(g.lists)
+			i++
+			i = i % len(g.columns)
 		}
 
-		g.app.SetFocus(g.lists[i])
+		// This isn't working. Create some kind of structure where it's apparent on which page which list resides.
+		// and only switch if it's not the current page. list struct with a page and a list.
+		page := (i / g.ColumnsPerPage) + 1
+		if page == 0 {
+			page++
+		}
+		g.app.SetFocus(g.columns[i])
+		name := fmt.Sprintf("%d/%d", page, (len(g.columns)/g.ColumnsPerPage)+1)
+		g.status.SetText("Switching to: " + name)
+		g.pages.SwitchToPage(name)
 		return
 	}
 }
