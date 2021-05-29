@@ -104,9 +104,6 @@ func (g *GTUIClient) showProjectData() error {
 		g.Logger.Debug().Err(err).Int64("project_id", g.ProjectID).Msg("Failed to get project data")
 		return err
 	}
-	//flexes := make([]*tview.Flex, 0)
-	//middleFlex := tview.NewFlex()
-	//middleFlex.SetBorder(true).SetTitle(fmt.Sprintf("Project #%d", g.ProjectID))
 	for _, c := range data.ProjectColumns {
 		textView := tview.NewTextView()
 		textView.SetWordWrap(true)
@@ -114,7 +111,6 @@ func (g *GTUIClient) showProjectData() error {
 		list.SetBorder(true)
 		list.SetTitle(c.Name)
 		list.SetWrapAround(true)
-		//list.SetMainTextColor(tcell.ColorBlueViolet)
 		list.SetSecondaryTextColor(tcell.ColorLightGreen)
 		list.SetTitleColor(tcell.ColorLightGoldenrodYellow)
 		for _, card := range c.ProjectColumnCards {
@@ -140,7 +136,6 @@ func (g *GTUIClient) showProjectData() error {
 			return event
 		})
 		g.columns = append(g.columns, list)
-		//middleFlex.AddItem(list, 0, 1, true)
 		// launch background rest fetcher
 		go func(id int64, name string, l *tview.List) {
 			if err := g.Github.LoadRest(context.Background(), id, l); err != nil {
@@ -148,7 +143,6 @@ func (g *GTUIClient) showProjectData() error {
 			}
 		}(c.ID, c.Name, list)
 	}
-	// divi up the list and create groups of flexes and then create pages out of them
 	pages := make([]*tview.Flex, 0)
 	index := 0
 	for {
@@ -178,7 +172,7 @@ func (g *GTUIClient) showProjectData() error {
 	// focus on the first page
 	g.pages.SwitchToPage(fmt.Sprintf("1/%d", len(pages)))
 	g.pages.SetBorder(true)
-	g.pages.SetTitle(fmt.Sprintf("Project #%d (%d)", g.ProjectID, len(pages)))
+	g.pages.SetTitle(fmt.Sprintf("Project #%d (1/%d)", g.ProjectID, len(pages)))
 	return nil
 }
 
@@ -217,16 +211,16 @@ func (g *GTUIClient) cycleFocus(reverse bool) {
 				i = len(g.columns) - 1
 			}
 		} else {
-			i++
-			i = i % len(g.columns)
+			i = (i + 1) % len(g.columns)
 		}
 
 		page := (i / g.ColumnsPerPage) + 1
 		if page == 0 {
 			page++
 		}
-		name := fmt.Sprintf("%d/%d", page, (len(g.columns)/g.ColumnsPerPage)+1)
-		g.pages.SwitchToPage(name)
+		pageCount := (len(g.columns) / g.ColumnsPerPage) + 1
+		g.pages.SwitchToPage(fmt.Sprintf("%d/%d", page, pageCount))
+		g.pages.SetTitle(fmt.Sprintf("Project #%d (%d/%d)", g.ProjectID, page, pageCount))
 		g.app.SetFocus(g.columns[i])
 		return
 	}
