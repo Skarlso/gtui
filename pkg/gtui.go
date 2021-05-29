@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strconv"
 
+	"github.com/Skarlso/gtui/models"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/rs/zerolog"
@@ -95,6 +97,19 @@ func (g *GTUIClient) showRepositoryProjectSelector() error {
 		g.Logger.Debug().Err(err).Str("org", g.Organization).Str("repo", g.Repository).Msg("Failed to list repository projects")
 		return err
 	}
+	return g.displayProjectList(projects)
+}
+
+func (g *GTUIClient) showOrganizationProjectSelector() error {
+	projects, err := g.Github.ListOrganizationProjects(context.Background(), g.Organization, nil)
+	if err != nil {
+		g.Logger.Debug().Err(err).Str("org", g.Organization).Str("repo", g.Repository).Msg("Failed to list organization projects")
+		return err
+	}
+	return g.displayProjectList(projects)
+}
+
+func (g *GTUIClient) displayProjectList(projects []*models.Project) error {
 	list := tview.NewList()
 	list.SetBorder(true)
 	list.SetTitle("Repository Projects")
@@ -106,7 +121,6 @@ func (g *GTUIClient) showRepositoryProjectSelector() error {
 		list.AddItem(p.Name, id, 0, nil)
 	}
 	list.SetSelectedFunc(func(i int, main string, secondary string, shortcut rune) {
-		g.status.SetText("Starting loading project " + main)
 		projectID, err := strconv.Atoi(secondary)
 		if err != nil {
 			g.status.SetText(fmt.Sprintf("failed to get project ID: %s", err.Error()))
@@ -118,12 +132,10 @@ func (g *GTUIClient) showRepositoryProjectSelector() error {
 		}
 		g.pages.RemovePage("Repository Project List")
 	})
+	if len(projects) == 0 {
+		list.AddItem("No projects found", "", 0, nil)
+	}
 	g.pages.AddPage("Repository Project List", list, true, true)
-	return nil
-}
-
-func (g *GTUIClient) showOrganizationProjectSelector() error {
-	// call show project data after user selected a project and projectID has been set on `g` receiver
 	return nil
 }
 
