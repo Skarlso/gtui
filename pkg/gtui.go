@@ -106,6 +106,7 @@ func (g *GTUIClient) showRepositoryProjectSelector() error {
 		list.AddItem(p.Name, id, 0, nil)
 	}
 	list.SetSelectedFunc(func(i int, main string, secondary string, shortcut rune) {
+		g.status.SetText("Starting loading project " + main)
 		projectID, err := strconv.Atoi(secondary)
 		if err != nil {
 			g.status.SetText(fmt.Sprintf("failed to get project ID: %s", err.Error()))
