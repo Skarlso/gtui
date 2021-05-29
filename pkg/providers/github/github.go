@@ -51,7 +51,7 @@ func NewGithubProvider(cfg Config, logger zerolog.Logger) *GithubProvider {
 }
 
 // ListRepositoryProjects lists all projects for a repository
-func (g *GithubProvider) ListRepositoryProjects(ctx context.Context, repo, owner string, opts *models.ListOptions) ([]*models.Project, error) {
+func (g *GithubProvider) ListRepositoryProjects(ctx context.Context, owner, repo string, opts *models.ListOptions) ([]*models.Project, error) {
 	result := make([]*models.Project, 0)
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()

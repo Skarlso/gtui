@@ -62,8 +62,9 @@ func (g *GTUIClient) Start() error {
 	g.app = app
 	g.status = status
 	g.pages = pages
+
 	if g.ProjectID != -1 {
-		if err := g.showProjectData(); err != nil {
+		if err := g.setProjectData(); err != nil {
 			return err
 		}
 	} else if g.Repository != "" && g.Organization != "" {
@@ -89,7 +90,34 @@ func (g *GTUIClient) Start() error {
 }
 
 func (g *GTUIClient) showRepositoryProjectSelector() error {
-	// call show project data after user selected a project and projectID has been set on `g` receiver
+	projects, err := g.Github.ListRepositoryProjects(context.Background(), g.Organization, g.Repository, nil)
+	if err != nil {
+		g.Logger.Debug().Err(err).Str("org", g.Organization).Str("repo", g.Repository).Msg("Failed to list repository projects")
+		return err
+	}
+	list := tview.NewList()
+	list.SetBorder(true)
+	list.SetTitle("Repository Projects")
+	list.SetWrapAround(true)
+	list.SetSecondaryTextColor(tcell.ColorLightGreen)
+	list.SetTitleColor(tcell.ColorLightGoldenrodYellow)
+	for _, p := range projects {
+		id := strconv.Itoa(int(p.ID))
+		list.AddItem(p.Name, id, 0, nil)
+	}
+	list.SetSelectedFunc(func(i int, main string, secondary string, shortcut rune) {
+		projectID, err := strconv.Atoi(secondary)
+		if err != nil {
+			g.status.SetText(fmt.Sprintf("failed to get project ID: %s", err.Error()))
+			return
+		}
+		g.ProjectID = int64(projectID)
+		if err := g.setProjectData(); err != nil {
+			g.status.SetText(fmt.Sprintf("failed to set project ID: %s", err.Error()))
+		}
+		g.pages.RemovePage("Repository Project List")
+	})
+	g.pages.AddPage("Repository Project List", list, true, true)
 	return nil
 }
 
@@ -98,7 +126,7 @@ func (g *GTUIClient) showOrganizationProjectSelector() error {
 	return nil
 }
 
-func (g *GTUIClient) showProjectData() error {
+func (g *GTUIClient) setProjectData() error {
 	data, err := g.Github.GetProjectData(context.Background(), g.ProjectID)
 	if err != nil {
 		g.Logger.Debug().Err(err).Int64("project_id", g.ProjectID).Msg("Failed to get project data")
