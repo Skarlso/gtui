@@ -3,7 +3,6 @@ package pkg
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"strconv"
 
 	"github.com/gdamore/tcell/v2"
@@ -13,8 +12,6 @@ import (
 	"github.com/Skarlso/gtui/models"
 	"github.com/Skarlso/gtui/pkg/providers"
 )
-
-var issueID = regexp.MustCompile(`IssueID: \[yellow\](\d+)\[lightgreen\]`)
 
 // Config contains configuration properties for GTUI.
 type Config struct {
@@ -167,7 +164,7 @@ func (g *GTUIClient) setProjectData() error {
 		for _, card := range c.ProjectColumnCards {
 			g.issueMap[int(card.IssueID)] = card.Content
 			title := card.Title
-			secondaryText := fmt.Sprintf("Author: [yellow]%s[lightgreen], Assignee: [yellow]%s[lightgreen], IssueID: [yellow]%d[lightgreen]", card.Author, card.Assignee, card.IssueID)
+			secondaryText := fmt.Sprintf("Author: [yellow]%s[lightgreen], Assignee: [yellow]%s[lightgreen]", card.Author, card.Assignee)
 			if card.Note != nil {
 				title = fmt.Sprintf("[gray]%s", *card.Note)
 				secondaryText = ""
@@ -177,7 +174,6 @@ func (g *GTUIClient) setProjectData() error {
 		list.SetBorderColor(tcell.ColorMediumPurple)
 		list.SetSelectedBackgroundColor(tcell.ColorYellow)
 		list.SetSelectedFocusOnly(true)
-		list.SetSelectedFunc(g.ListEnterHandler)
 		col := &column{
 			id:    c.ID,
 			name:  c.Name,
@@ -241,6 +237,10 @@ func (g *GTUIClient) ListInputCapture(currentColumn *column, list *tview.List) f
 			g.moveIssue(currentColumn, currentColumn.next, list)
 		} else if event.Key() == tcell.KeyCtrlJ {
 			g.moveIssue(currentColumn, currentColumn.prev, list)
+		} else if event.Key() == tcell.KeyEnter {
+			ci := list.GetCurrentItem()
+			selected := currentColumn.cards[ci]
+			g.status.SetText(g.issueMap[int(selected.IssueID)])
 		}
 		return event
 	}
@@ -261,36 +261,13 @@ func (g *GTUIClient) moveIssue(currentColumn *column, next *column, list *tview.
 	list.RemoveItem(ci)
 	currentColumn.cards = append(currentColumn.cards[:ci], currentColumn.cards[ci+1:]...)
 	title := card.Title
-	secondaryText := fmt.Sprintf("Author: [yellow]%s[lightgreen], Assignee: [yellow]%s[lightgreen], IssueID: [yellow]%d[lightgreen]", card.Author, card.Assignee, card.IssueID)
+	secondaryText := fmt.Sprintf("Author: [yellow]%s[lightgreen], Assignee: [yellow]%s[lightgreen]", card.Author, card.Assignee)
 	if card.Note != nil {
 		title = fmt.Sprintf("[gray]%s", *card.Note)
 		secondaryText = ""
 	}
 	next.list.AddItem(title, secondaryText, 0, nil)
 	next.cards = append(next.cards, card)
-}
-
-// ListEnterHandler handles issue enter presses for a list.
-func (g *GTUIClient) ListEnterHandler(i int, mainText string, secondaryText string, shortcut rune) {
-	content := mainText
-	if secondaryText != "" {
-		m := issueID.FindAllStringSubmatch(secondaryText, -1)
-		if len(m) == 0 {
-			g.status.SetText("[red]failed to match out issue code")
-			return
-		}
-		if len(m[0]) < 1 {
-			g.status.SetText("[red]failed to parse out issue ID")
-			return
-		}
-		i, err := strconv.Atoi(m[0][1])
-		if err != nil {
-			g.status.SetText(err.Error())
-			return
-		}
-		content = g.issueMap[i]
-	}
-	g.status.SetText(content)
 }
 
 // cycleFocus will go around all the lists and shift focus on them with <TAB>.
