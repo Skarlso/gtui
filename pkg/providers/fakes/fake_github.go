@@ -7,6 +7,7 @@ import (
 
 	"github.com/Skarlso/gtui/models"
 	"github.com/Skarlso/gtui/pkg/providers"
+	"github.com/rivo/tview"
 )
 
 type FakeGithub struct {
@@ -68,6 +69,32 @@ type FakeGithub struct {
 	listRepositoryProjectsReturnsOnCall map[int]struct {
 		result1 []*models.Project
 		result2 error
+	}
+	LoadRestStub        func(context.Context, int64, *tview.List) error
+	loadRestMutex       sync.RWMutex
+	loadRestArgsForCall []struct {
+		arg1 context.Context
+		arg2 int64
+		arg3 *tview.List
+	}
+	loadRestReturns struct {
+		result1 error
+	}
+	loadRestReturnsOnCall map[int]struct {
+		result1 error
+	}
+	MoveAnIssueStub        func(context.Context, int64, int64) error
+	moveAnIssueMutex       sync.RWMutex
+	moveAnIssueArgsForCall []struct {
+		arg1 context.Context
+		arg2 int64
+		arg3 int64
+	}
+	moveAnIssueReturns struct {
+		result1 error
+	}
+	moveAnIssueReturnsOnCall map[int]struct {
+		result1 error
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
@@ -336,6 +363,132 @@ func (fake *FakeGithub) ListRepositoryProjectsReturnsOnCall(i int, result1 []*mo
 	}{result1, result2}
 }
 
+func (fake *FakeGithub) LoadRest(arg1 context.Context, arg2 int64, arg3 *tview.List) error {
+	fake.loadRestMutex.Lock()
+	ret, specificReturn := fake.loadRestReturnsOnCall[len(fake.loadRestArgsForCall)]
+	fake.loadRestArgsForCall = append(fake.loadRestArgsForCall, struct {
+		arg1 context.Context
+		arg2 int64
+		arg3 *tview.List
+	}{arg1, arg2, arg3})
+	stub := fake.LoadRestStub
+	fakeReturns := fake.loadRestReturns
+	fake.recordInvocation("LoadRest", []interface{}{arg1, arg2, arg3})
+	fake.loadRestMutex.Unlock()
+	if stub != nil {
+		return stub(arg1, arg2, arg3)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeGithub) LoadRestCallCount() int {
+	fake.loadRestMutex.RLock()
+	defer fake.loadRestMutex.RUnlock()
+	return len(fake.loadRestArgsForCall)
+}
+
+func (fake *FakeGithub) LoadRestCalls(stub func(context.Context, int64, *tview.List) error) {
+	fake.loadRestMutex.Lock()
+	defer fake.loadRestMutex.Unlock()
+	fake.LoadRestStub = stub
+}
+
+func (fake *FakeGithub) LoadRestArgsForCall(i int) (context.Context, int64, *tview.List) {
+	fake.loadRestMutex.RLock()
+	defer fake.loadRestMutex.RUnlock()
+	argsForCall := fake.loadRestArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
+}
+
+func (fake *FakeGithub) LoadRestReturns(result1 error) {
+	fake.loadRestMutex.Lock()
+	defer fake.loadRestMutex.Unlock()
+	fake.LoadRestStub = nil
+	fake.loadRestReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeGithub) LoadRestReturnsOnCall(i int, result1 error) {
+	fake.loadRestMutex.Lock()
+	defer fake.loadRestMutex.Unlock()
+	fake.LoadRestStub = nil
+	if fake.loadRestReturnsOnCall == nil {
+		fake.loadRestReturnsOnCall = make(map[int]struct {
+			result1 error
+		})
+	}
+	fake.loadRestReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeGithub) MoveAnIssue(arg1 context.Context, arg2 int64, arg3 int64) error {
+	fake.moveAnIssueMutex.Lock()
+	ret, specificReturn := fake.moveAnIssueReturnsOnCall[len(fake.moveAnIssueArgsForCall)]
+	fake.moveAnIssueArgsForCall = append(fake.moveAnIssueArgsForCall, struct {
+		arg1 context.Context
+		arg2 int64
+		arg3 int64
+	}{arg1, arg2, arg3})
+	stub := fake.MoveAnIssueStub
+	fakeReturns := fake.moveAnIssueReturns
+	fake.recordInvocation("MoveAnIssue", []interface{}{arg1, arg2, arg3})
+	fake.moveAnIssueMutex.Unlock()
+	if stub != nil {
+		return stub(arg1, arg2, arg3)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeGithub) MoveAnIssueCallCount() int {
+	fake.moveAnIssueMutex.RLock()
+	defer fake.moveAnIssueMutex.RUnlock()
+	return len(fake.moveAnIssueArgsForCall)
+}
+
+func (fake *FakeGithub) MoveAnIssueCalls(stub func(context.Context, int64, int64) error) {
+	fake.moveAnIssueMutex.Lock()
+	defer fake.moveAnIssueMutex.Unlock()
+	fake.MoveAnIssueStub = stub
+}
+
+func (fake *FakeGithub) MoveAnIssueArgsForCall(i int) (context.Context, int64, int64) {
+	fake.moveAnIssueMutex.RLock()
+	defer fake.moveAnIssueMutex.RUnlock()
+	argsForCall := fake.moveAnIssueArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
+}
+
+func (fake *FakeGithub) MoveAnIssueReturns(result1 error) {
+	fake.moveAnIssueMutex.Lock()
+	defer fake.moveAnIssueMutex.Unlock()
+	fake.MoveAnIssueStub = nil
+	fake.moveAnIssueReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeGithub) MoveAnIssueReturnsOnCall(i int, result1 error) {
+	fake.moveAnIssueMutex.Lock()
+	defer fake.moveAnIssueMutex.Unlock()
+	fake.MoveAnIssueStub = nil
+	if fake.moveAnIssueReturnsOnCall == nil {
+		fake.moveAnIssueReturnsOnCall = make(map[int]struct {
+			result1 error
+		})
+	}
+	fake.moveAnIssueReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
+}
+
 func (fake *FakeGithub) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
@@ -347,6 +500,10 @@ func (fake *FakeGithub) Invocations() map[string][][]interface{} {
 	defer fake.listOrganizationProjectsMutex.RUnlock()
 	fake.listRepositoryProjectsMutex.RLock()
 	defer fake.listRepositoryProjectsMutex.RUnlock()
+	fake.loadRestMutex.RLock()
+	defer fake.loadRestMutex.RUnlock()
+	fake.moveAnIssueMutex.RLock()
+	defer fake.moveAnIssueMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value
