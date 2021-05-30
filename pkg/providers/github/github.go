@@ -254,6 +254,14 @@ func (g *GithubProvider) GetProjectData(ctx context.Context, projectID int64) (*
 	return data, nil
 }
 
+func (g *GithubProvider) MoveAnIssue(ctx context.Context, cardID int64, columnID int64) error {
+	g.Client.Projects.MoveProjectCard(ctx, cardID, &github.ProjectCardMoveOptions{
+		Position: "top",
+		ColumnID: 0,
+	})
+	return nil
+}
+
 // LoadRest will fetch the rest of the cards if there are any.
 func (g *GithubProvider) LoadRest(ctx context.Context, columnID int64, list *tview.List) error {
 	listOpts := &github.ProjectCardListOptions{
