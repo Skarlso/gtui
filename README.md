@@ -1,5 +1,7 @@
 # GTUI
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/Skarlso/gtui)](https://goreportcard.com/report/github.com/Skarlso/gtui)
+
 This is a Terminal UI for working with GitHub Projects.
 
 ![Overview](./img/overview.png)
