@@ -24,6 +24,7 @@ type Config struct {
 	ColumnsPerPage int
 }
 
+// Dependencies defines dependencies for this provider.
 type Dependencies struct {
 	Github providers.Github
 	Logger zerolog.Logger

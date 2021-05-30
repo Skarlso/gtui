@@ -86,6 +86,7 @@ func getEnvOrDefault(key, def string) string {
 	return def
 }
 
+// Execute runs the root command.
 func Execute() error {
 	return rootCmd.Execute()
 }
