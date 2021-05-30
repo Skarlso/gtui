@@ -1,0 +1,34 @@
+release:
+  prerelease: auto # this should detect a release candidate and mark it as pre-release in GitHub
+
+builds:
+  - id: default
+    binary: gtui
+    flags:
+      - -tags
+      - netgo release
+      - -trimpath
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+      - arm
+    goarm:
+      - 6
+      - 7
+
+archives:
+  - id: default
+    builds:
+      - default
+    name_template: "gtui_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    format: tar.gz
+    files:
+      - none*
