@@ -254,11 +254,15 @@ func (g *GithubProvider) GetProjectData(ctx context.Context, projectID int64) (*
 	return data, nil
 }
 
+// MoveAnIssue into a new column.
 func (g *GithubProvider) MoveAnIssue(ctx context.Context, cardID int64, columnID int64) error {
-	g.Client.Projects.MoveProjectCard(ctx, cardID, &github.ProjectCardMoveOptions{
+	if resp, err := g.Client.Projects.MoveProjectCard(ctx, cardID, &github.ProjectCardMoveOptions{
 		Position: "top",
-		ColumnID: 0,
-	})
+		ColumnID: columnID,
+	}); err != nil {
+		g.logGithubResponseBody(resp)
+		return err
+	}
 	return nil
 }
 
