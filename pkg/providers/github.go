@@ -21,4 +21,6 @@ type Github interface {
 	GetProjectData(ctx context.Context, id int64) (*models.ProjectData, error)
 	// LoadRest will fetch the rest of the cards if there are any.
 	LoadRest(ctx context.Context, columnID int64, list *tview.List) error
+	// MoveAnIssue into a new column.
+	MoveAnIssue(ctx context.Context, cardID int64, columnID int64) error
 }

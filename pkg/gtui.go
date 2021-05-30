@@ -6,12 +6,11 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/Skarlso/gtui/models"
-
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/rs/zerolog"
 
+	"github.com/Skarlso/gtui/models"
 	"github.com/Skarlso/gtui/pkg/providers"
 )
 
@@ -30,6 +29,15 @@ type Dependencies struct {
 	Logger zerolog.Logger
 }
 
+type column struct {
+	id    int64
+	name  string
+	list  *tview.List
+	prev  *column
+	next  *column
+	cards []*models.ProjectColumnCard
+}
+
 // GTUIClient defines a client for GTUI.
 type GTUIClient struct {
 	Config
@@ -37,7 +45,7 @@ type GTUIClient struct {
 
 	app      *tview.Application
 	status   *tview.TextView
-	columns  []*tview.List
+	columns  []*column
 	issueMap map[int]string
 	pages    *tview.Pages
 }
@@ -145,7 +153,8 @@ func (g *GTUIClient) setProjectData() error {
 		g.Logger.Debug().Err(err).Int64("project_id", g.ProjectID).Msg("Failed to get project data")
 		return err
 	}
-	for _, c := range data.ProjectColumns {
+	g.columns = make([]*column, len(data.ProjectColumns))
+	for i, c := range data.ProjectColumns {
 		textView := tview.NewTextView()
 		textView.SetWordWrap(true)
 		list := tview.NewList()
@@ -168,15 +177,18 @@ func (g *GTUIClient) setProjectData() error {
 		list.SetSelectedBackgroundColor(tcell.ColorYellow)
 		list.SetSelectedFocusOnly(true)
 		list.SetSelectedFunc(g.ListEnterHandler)
-		list.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-			if event.Key() == tcell.KeyTab {
-				g.cycleFocus(false)
-			} else if event.Key() == tcell.KeyBacktab {
-				g.cycleFocus(true)
-			}
-			return event
-		})
-		g.columns = append(g.columns, list)
+		col := &column{
+			id:    c.ID,
+			name:  c.Name,
+			list:  list,
+			cards: c.ProjectColumnCards,
+		}
+		g.columns[i] = col
+		if i-1 > -1 {
+			g.columns[i-1].next = g.columns[i]
+			g.columns[i].prev = g.columns[i-1]
+		}
+		list.SetInputCapture(g.ListInputCapture(col, list))
 		// launch background rest fetcher
 		go func(id int64, name string, l *tview.List) {
 			if err := g.Github.LoadRest(context.Background(), id, l); err != nil {
@@ -191,7 +203,7 @@ func (g *GTUIClient) setProjectData() error {
 			middleFlex := tview.NewFlex()
 			middleFlex.SetBorder(false)
 			for _, l := range g.columns[index:] {
-				middleFlex.AddItem(l, 0, 1, true)
+				middleFlex.AddItem(l.list, 0, 1, true)
 			}
 			pages = append(pages, middleFlex)
 			break
@@ -200,7 +212,7 @@ func (g *GTUIClient) setProjectData() error {
 		middleFlex := tview.NewFlex()
 		middleFlex.SetBorder(false)
 		for _, l := range list {
-			middleFlex.AddItem(l, 0, 1, true)
+			middleFlex.AddItem(l.list, 0, 1, true)
 		}
 		pages = append(pages, middleFlex)
 		index += g.ColumnsPerPage
@@ -215,6 +227,46 @@ func (g *GTUIClient) setProjectData() error {
 	g.pages.SetBorder(true)
 	g.pages.SetTitle(fmt.Sprintf("Project #%d (1/%d)", g.ProjectID, len(pages)))
 	return nil
+}
+
+// ListInputCapture handles focus cycling of lists with <TAB> and the moving around of issues.
+func (g *GTUIClient) ListInputCapture(currentColumn *column, list *tview.List) func(event *tcell.EventKey) *tcell.EventKey {
+	return func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyTab {
+			g.cycleFocus(false)
+		} else if event.Key() == tcell.KeyBacktab {
+			g.cycleFocus(true)
+		} else if event.Key() == tcell.KeyCtrlK {
+			g.moveIssue(currentColumn, currentColumn.next, list)
+		} else if event.Key() == tcell.KeyCtrlJ {
+			g.moveIssue(currentColumn, currentColumn.prev, list)
+		}
+		return event
+	}
+}
+
+// moveIssue will set the new location of a card.
+func (g *GTUIClient) moveIssue(currentColumn *column, next *column, list *tview.List) {
+	ci := list.GetCurrentItem()
+	card := currentColumn.cards[ci]
+	if next == nil {
+		g.status.SetText("[red]No column in that direction")
+		return
+	}
+	if err := g.Github.MoveAnIssue(context.Background(), card.ID, next.id); err != nil {
+		g.status.SetText(fmt.Sprintf("[red]failed to move issue: %s", err.Error()))
+	}
+	// move the card into the next list and update the app.Draw
+	list.RemoveItem(ci)
+	currentColumn.cards = append(currentColumn.cards[:ci], currentColumn.cards[ci+1:]...)
+	title := card.Title
+	secondaryText := fmt.Sprintf("Author: [yellow]%s[lightgreen], Assignee: [yellow]%s[lightgreen], IssueID: [yellow]%d[lightgreen]", card.Author, card.Assignee, card.IssueID)
+	if card.Note != nil {
+		title = fmt.Sprintf("[gray]%s", *card.Note)
+		secondaryText = ""
+	}
+	next.list.AddItem(title, secondaryText, 0, nil)
+	next.cards = append(next.cards, card)
 }
 
 // ListEnterHandler handles issue enter presses for a list.
@@ -240,9 +292,11 @@ func (g *GTUIClient) ListEnterHandler(i int, mainText string, secondaryText stri
 	g.status.SetText(content)
 }
 
+// cycleFocus will go around all the lists and shift focus on them with <TAB>.
+// This function also cycles through pages of columns if there are any.
 func (g *GTUIClient) cycleFocus(reverse bool) {
 	for i, el := range g.columns {
-		if !el.HasFocus() {
+		if !el.list.HasFocus() {
 			continue
 		}
 
@@ -262,7 +316,7 @@ func (g *GTUIClient) cycleFocus(reverse bool) {
 		pageCount := (len(g.columns) / g.ColumnsPerPage) + 1
 		g.pages.SwitchToPage(fmt.Sprintf("%d/%d", page, pageCount))
 		g.pages.SetTitle(fmt.Sprintf("Project #%d (%d/%d)", g.ProjectID, page, pageCount))
-		g.app.SetFocus(g.columns[i])
+		g.app.SetFocus(g.columns[i].list)
 		return
 	}
 }
