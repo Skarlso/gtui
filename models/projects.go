@@ -23,6 +23,7 @@ type ProjectColumnCard struct {
 	Note     *string
 	Author   string
 	Assignee string
+	Labels   []string
 }
 
 // ProjectData .

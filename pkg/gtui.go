@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -164,7 +165,7 @@ func (g *GTUIClient) setProjectData() error {
 		for _, card := range c.ProjectColumnCards {
 			g.issueMap[int(card.IssueID)] = card.Content
 			title := card.Title
-			secondaryText := fmt.Sprintf("Author: [yellow]%s[lightgreen], Assignee: [yellow]%s[lightgreen]", card.Author, card.Assignee)
+			secondaryText := fmt.Sprintf("Author: [yellow]%s[lightgreen], Assignee: [yellow]%s[lightgreen], Labels: %s", card.Author, card.Assignee, strings.Join(card.Labels, ","))
 			if card.Note != nil {
 				title = fmt.Sprintf("[gray]%s", *card.Note)
 				secondaryText = ""
@@ -261,7 +262,7 @@ func (g *GTUIClient) moveIssue(currentColumn *column, next *column, list *tview.
 	list.RemoveItem(ci)
 	currentColumn.cards = append(currentColumn.cards[:ci], currentColumn.cards[ci+1:]...)
 	title := card.Title
-	secondaryText := fmt.Sprintf("Author: [yellow]%s[lightgreen], Assignee: [yellow]%s[lightgreen]", card.Author, card.Assignee)
+	secondaryText := fmt.Sprintf("Author: [yellow]%s[lightgreen], Assignee: [yellow]%s[lightgreen], Labels: %s---", card.Author, card.Assignee, strings.Join(card.Labels, ","))
 	if card.Note != nil {
 		title = fmt.Sprintf("[gray]%s", *card.Note)
 		secondaryText = ""

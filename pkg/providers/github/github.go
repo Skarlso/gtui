@@ -232,6 +232,10 @@ func (g *GithubProvider) GetProjectData(ctx context.Context, projectID int64) (*
 				if issue.Assignee != nil {
 					assignee = issue.Assignee.GetLogin()
 				}
+				var labels []string
+				for _, l := range issue.Labels {
+					labels = append(labels, l.GetName())
+				}
 				cards = append(cards, &models.ProjectColumnCard{
 					ID:       card.GetID(),
 					Note:     card.Note,
@@ -240,6 +244,7 @@ func (g *GithubProvider) GetProjectData(ctx context.Context, projectID int64) (*
 					Author:   issue.GetUser().GetLogin(),
 					Assignee: assignee,
 					IssueID:  issue.GetID(),
+					Labels:   labels,
 				})
 				return nil
 			})
